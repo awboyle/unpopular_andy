@@ -17,7 +17,7 @@ class CutoutData(object):
 
     """
 
-    def __init__(self, hdu, path, remove_bad=True, verbose=True, 
+    def __init__(self, hdu, remove_bad=True, verbose=True, 
                  provenance='TessCut', quality=None, bkg_subtract=False, bkg_n=100,
                  time_path=None, flux_path=None, ferr_path=None):
         
