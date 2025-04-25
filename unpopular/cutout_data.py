@@ -17,70 +17,28 @@ class CutoutData(object):
 
     """
 
-    def __init__(self, path, remove_bad=True, verbose=True, 
+    def __init__(self, hdu, path, remove_bad=True, verbose=True, 
                  provenance='TessCut', quality=None, bkg_subtract=False, bkg_n=100,
                  time_path=None, flux_path=None, ferr_path=None):
-        try:
-            self.file_path = path
-            self.file_name = path.split("/")[-1]
-        except AttributeError:
-            print("Locally reading in files")
-            self.file_path = None
-            self.file_name = None
         
-        if provenance == 'TessCut':
-            s = self.file_name.split("-")
-            self.sector = s[1].strip("s").lstrip("0")
-            self.camera = s[2]
-            self.ccd = s[3][0]
-
-            with fits.open(path, mode="readonly") as hdu:
-                self.time = hdu[1].data["TIME"]  # pylint: disable=no-member
-                self.fluxes = hdu[1].data["FLUX"]  # pylint: disable=no-member
-                self.flux_errors = hdu[1].data["FLUX_ERR"]  # pylint: disable=no-member
-                if quality is None:
-                    self.quality = hdu[1].data["QUALITY"]  # pylint: disable=no-member
-                else:
-                    self.quality = quality
-                try:
-                    self.wcs_info = WCS(hdu[2].header)  # pylint: disable=no-member
-                except Exception as inst:
-                    print(inst)
-                    print("WCS Info could not be retrieved")
         
-        elif provenance == 'eleanor':
-            with fits.open(path, mode="readonly") as hdu:
-                self.sector = int(hdu[2].header["SECTOR"])  # pylint: disable=no-member
-                self.camera = int(hdu[2].header["CAMERA"])  # pylint: disable=no-member
-                self.ccd    = int(hdu[2].header["CCD"])  # pylint: disable=no-member
+        #s = self.file_name.split("-")
+        self.sector = 0
+        self.camera = 0
+        self.ccd = 0
 
-                self.time = (hdu[1].data['TSTART'] + hdu[1].data['TSTOP'])/2  # pylint: disable=no-member
-                self.fluxes = hdu[2].data  # pylint: disable=no-member
-                self.flux_errors = hdu[3].data  # pylint: disable=no-member
-                if quality is None:
-                    self.quality = hdu[1].data['QUALITY']  # pylint: disable=no-member
-                else:
-                    self.quality = quality
-
-                try:
-                    self.wcs_info = WCS(hdu[2].header)  # pylint: disable=no-member
-                except Exception as inst:
-                    print(inst)
-                    print("WCS Info could not be retrieved")
-
-        elif provenance == 'local':
-            self.sector = None
-            self.camera = None
-            self.ccd = None
-
-            self.time = np.load(time_path)
-            self.fluxes = np.load(flux_path)
-            self.flux_errors = np.load(ferr_path)
-
-            self.quality = np.zeros_like(self.time)
-                    
+        self.time = hdu[1].data["TIME"]  # pylint: disable=no-member
+        self.fluxes = hdu[1].data["FLUX"]  # pylint: disable=no-member
+        self.flux_errors = hdu[1].data["FLUX_ERR"]  # pylint: disable=no-member
+        if quality is None:
+            self.quality = hdu[1].data["QUALITY"]  # pylint: disable=no-member
         else:
-            raise ValueError('Data provenance not understood. Pass through TessCut, eleanor, or local')
+            self.quality = quality
+        try:
+            self.wcs_info = WCS(hdu[2].header)  # pylint: disable=no-member
+        except Exception as inst:
+            print(inst)
+            print("WCS Info could not be retrieved")
 
         self.flagged_times = self.time[self.quality > 0]
         # If remove_bad is set to True, we'll remove the values with a nonzero entry in the quality array
